@@ -6,40 +6,6 @@ require 'vendor/autoload.php';
 
 $date = date('Y-m-d');
 
-// Send a PutObject request and get the result object.
-// $key = $date.'/project_backup.zip';
-
-// $result = $s3->putObject([
-// 	'Bucket' => 'carguideinfo', // aws bucket
-// 	'Key'    => $key,
-// 	'Body'   => 'this is the body!',
-// 	'SourceFile' => $destination.$projectName1
-// ]);
-
-// $result = $s3->putObject([
-// 	'Bucket' => 'carguideinfo', // aws bucket
-// 	'Key'    => $key,
-// 	'Body'   => 'this is the body!',
-// 	'SourceFile' => $destination2.$projectName2
-// ]);
-
-// $key = $date.'/db_backup.sql';
-
-// $result = $s3->putObject([
-// 	'Bucket' => 'carguideinfo', // aws bucket
-// 	'Key'    => $key,
-// 	'Body'   => 'this is the body!',
-// 	'SourceFile' => $dbBackup->backupDirectory.'/'.$dbBackup->filename . '.sql'
-// ]);
-
-// $result = $s3->putObject([
-// 	'Bucket' => 'carguideinfo', // aws bucket
-// 	'Key'    => $key,
-// 	'Body'   => 'this is the body!',
-// 	'SourceFile' => $dbBackup2->backupDirectory.'/'.$dbBackup2->filename . '.sql'
-// ]);
-// Print the body of the result by indexing into the result object.
-
 $fileKey = $date.'/project_backup.zip';
 $dbKey = $date.'/db_backup.sql';
 
