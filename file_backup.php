@@ -1,6 +1,10 @@
 <?php
-@ini_set('max_execution_time',0); 
+// Config file
+require('config.php');
+
+@ini_set('max_execution_time', 0);
 @ini_set('memory_limit', '-1');
+
 function Zip($source, $destination)
 {
 	if (!extension_loaded('zip') || !file_exists($source)) {return false;}
@@ -30,16 +34,13 @@ function Zip($source, $destination)
 	return $zip->close();
 }
 
-function autobackup_data($dir,$destination, $filename)
+function autobackup_data($dir,$destination,$project_name)
 {
 	if (!is_dir($destination)){
-		mkdir($destination, 0755);
-	}else{
-		deleteDir($destination);
-		mkdir($destination, 0755);
+		mkdir($destination, 0777);
 	}
-
 	
+	$filename = $project_name.'_'.date('Y_m_d');
 	$backup = $destination.$filename;
 	if (is_dir($dir))
 	{
@@ -55,30 +56,6 @@ function autobackup_data($dir,$destination, $filename)
 	}
 }
 
-function deleteDir($dirPath) {
-    if (! is_dir($dirPath)) {
-        throw new InvalidArgumentException("$dirPath must be a directory");
-    }
-    if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') {
-        $dirPath .= '/';
-    }
-    $files = glob($dirPath . '*', GLOB_MARK);
-    foreach ($files as $file) {
-        if (is_dir($file)) {
-            deleteDir($file);
-        } else {
-            unlink($file);
-        }
-    }
-    rmdir($dirPath);
-}
-$dir = '../bu1';
-$destination = './fileBackup/';
-$filename = 'backup-bu1-'.date('Y-m-d_H-i-s').'.zip';
-$projectName1 = autobackup_data($dir,$destination, $filename);
+$projectName = autobackup_data($project_dir, getcwd().'/tmp/',$project_name);
 
-$dir2 = '../bu2';
-$destination2 = './fileBackup2/';
-$filename2 = 'backup-bu2-'.date('Y-m-d_H-i-s').'.zip';
-$projectName2 = autobackup_data($dir2,$destination2, $filename2);
 ?>

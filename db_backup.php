@@ -1,39 +1,39 @@
 <?php
+// Config file
+require('config.php');
+
+@ini_set('max_execution_time', 0);
+@ini_set('memory_limit', '-1');
 
 /* Error Reporting */
 error_reporting(E_ALL);
 
 /* Creating New Instance for the class DatabaseBackup */
-$dbBackup	=	new DatabaseBackup('localhost', 'root', '', 'quick_cards');
-$dbBackup2	=	new DatabaseBackup('localhost', 'root', '', 'nuploy_web');
-/* @Function Called - 	backupDatabase() 
- * @parameters		-	1st Param - Default : fetches all the tables
-				Specific Tables - array(table1,table2,table3...);
- *				2nd Param - If not specified then creates one where this script resides
- */
-$tables	=	'*';
-$dbBackup->backupDatabase($tables,'./dbBackup');
-$dbBackup2->backupDatabase($tables,'./dbBackup2');
+$dbBackup	=	new DatabaseBackup($db_host, $db_user, $db_pass, $db_name);
+
+
+$tables = '*';
+$dbBackup->backupDatabase($tables, getcwd().'/tmp');
 
 class DatabaseBackup{
 	public $hostname		=	''; /* DB Hostname */
 	public $username		=	''; /* DB Username */
 	public $password		=	''; /* DB Password */
 	public $database		=	''; /* Database Name */
-	public $characterSet		=	'utf8'; /* DB Character Set */
-	public $backupDirectory	=	'./test'; /* Backup Directory */
+	public $characterSet	=	'utf8'; /* DB Character Set */
+	public $backupDirectory	=	''; /* Backup Directory */
 	public $filename = '';
 	
 	/* Mysqli Connection Handle */
 	public $link			=	'';
 	
 	/* Class Constructor */
-	function __construct($host, $user, $pass, $db){
+	function __construct($hostname, $username, $password, $database){
 		/* Initialization of DB variables */
-		$this->hostname		=	$host;
-		$this->username		=	$user;
-		$this->password		=	$pass;
-		$this->database		=	$db;
+		$this->hostname		=	$hostname;
+		$this->username		=	$username;
+		$this->password		=	$password;
+		$this->database		=	$database;
 		/* Call DB Initialization Function */
 		$this->initalizeDB();
 		
@@ -55,11 +55,6 @@ class DatabaseBackup{
 	/* Function is used to Backup you Database */
 	public function backupDatabase($tables = '*',$backupDirectory = ''){
 
-		// Remove previos file
-		$backupDirectoryR = ($backupDirectory == '') ? $this->backupDirectory : $backupDirectory;
-
-		self::deleteDir($backupDirectoryR);
-
 		/* If all the tables needed */
 		if($tables == '*'){
 			$tables =	array();
@@ -75,8 +70,6 @@ class DatabaseBackup{
 		}
 		/* Create the database */
 		$sql	=	'SET FOREIGN_KEY_CHECKS = 0;'."\n".'CREATE DATABASE IF NOT EXISTS `'.$this->database."`;\n";
-		/* Use the database */
-		$sql	.=	'USE `'.$this->database.'`;';
 		
 		/* Loop throug all the $tables */
 		foreach($tables as $table){
@@ -84,7 +77,7 @@ class DatabaseBackup{
 			//echo 'Logging Table : `'.$table.'` : ';
 			
 			/* Fetch the details of the table */
-			$tableDetails	=	mysqli_query($this->link, "SELECT * FROM ".$table);
+			$tableDetails	=	mysqli_query($this->link, "SELECT DISTINCT * FROM ".$table);
 			
 			/* Check the Number of Coloumns in the table */
 			$totalCols	=	mysqli_num_fields($tableDetails);
@@ -122,8 +115,28 @@ class DatabaseBackup{
 		/* If the 2nd parameter was not specified then default one will be passed */
 		$backupDirectory = ($backupDirectory == '') ? $this->backupDirectory : $backupDirectory;
 		if($this->logDatabase($sql,$backupDirectory)){
-			echo '<h4>Exported Database <span style="color:#7D0097">`'.$this->database.'`</span>Successfully to folder - <span style="color:#1CAD7A"> `'.$backupDirectory.'`</span><h4>';
-		}else{
+            // Enter the name of directory
+            $pathdir = getcwd()."/tmp/";
+
+            // Enter the name to creating zipped directory
+            $zipcreated = getcwd()."/tmp/$this->filename.zip";
+
+            // Create new zip class
+            $zip = new ZipArchive;
+
+            if($zip -> open($zipcreated, ZipArchive::CREATE ) === TRUE) {
+
+                // Store the path into the variable
+                $dir = opendir($pathdir);
+
+                while($file = readdir($dir)) {
+                    if(is_file($pathdir.$file)) {
+                        $zip -> addFile($pathdir.$file, $file);
+                    }
+                }
+                $zip ->close();
+            }
+        }else{
 			echo '<h2>Error in Exporting Database '.$this->database.'<h2>';
 		}
 		
@@ -136,8 +149,8 @@ class DatabaseBackup{
 		}
 		
 		if(!file_exists($backupDirectory)){
-			if(mkdir($backupDirectory,0755)){
-				$filename	=	'log_'.$this->database.'-'.date('Y-m-d_H-i-s');
+			if(mkdir($backupDirectory, 0777)){
+				$filename	=	'db_'.$this->database.'_'.date('Y_m_d');
 				$this->filename = $filename;
 				$fileHandler	=	fopen($backupDirectory.'/'.$filename.'.sql','w+');
 				fwrite($fileHandler,$sql);
@@ -146,7 +159,7 @@ class DatabaseBackup{
 				return true;
 			}
 		}else{
-			$filename	=	'log_'.$this->database.'-'.date('Y-m-d_H-i-s');
+			$filename	=	'db_'.$this->database.'_'.date('Y_m_d');
 			$this->filename = $filename;
 			$fileHandler	=	fopen($backupDirectory.'/'.$filename.'.sql','w+');
 			fwrite($fileHandler,$sql);
@@ -157,22 +170,4 @@ class DatabaseBackup{
 		return false;	
 		
 	}
-
-	public static function deleteDir($dirPath) {
-    if (! is_dir($dirPath)) {
-        throw new InvalidArgumentException("$dirPath must be a directory");
-    }
-    if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') {
-        $dirPath .= '/';
-    }
-    $files = glob($dirPath . '*', GLOB_MARK);
-    foreach ($files as $file) {
-        if (is_dir($file)) {
-            self::deleteDir($file);
-        } else {
-            unlink($file);
-        }
-    }
-    rmdir($dirPath);
-}
 }

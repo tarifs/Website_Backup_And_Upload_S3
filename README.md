@@ -1,1 +1,4 @@
-# Website_Backup_And_Upload_S3
+# website_backup_script
+
+Run this command
+composer require aws/aws-sdk-php
